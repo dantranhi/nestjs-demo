@@ -10,6 +10,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import Permission from 'src/type/permission.type';
 
 @Injectable()
 export class UserService {
@@ -36,7 +37,11 @@ export class UserService {
     try {
       const hash = await bcrypt.hash(user.password, 10);
       return await this.prisma.user.create({
-        data: { ...user, password: hash },
+        data: {
+          ...user,
+          password: hash,
+          permissions: [Permission.UPDATE_AVATAR],
+        },
       });
     } catch (error) {
       if (error.code === 'P2002')

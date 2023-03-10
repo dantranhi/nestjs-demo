@@ -15,11 +15,15 @@ model User {
   email              String       @unique
   name               String?
   password           String
+  // role               String           @default("USER")
   hashedRefreshToken String?
   avatarUrl          String?
   avatarPublicId     String?
   posts              Post[]
   courses            UserCourse[]
+  permissions        String[]     @default([])
+
+  @@map("users")
 }
 
 model Post {
