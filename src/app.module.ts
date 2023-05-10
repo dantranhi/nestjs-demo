@@ -13,6 +13,11 @@ import { EmailSchedulingModule } from './email-scheduling/email-scheduling.modul
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { memoryStorage } from 'multer';
 import { MulterModule } from '@nestjs/platform-express';
+import { StripeModule } from './stripe/stripe.module';
+import { OpenpayModule } from './openpay/openpay.module';
+import { NotificationModule } from './notification/notification.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -34,6 +39,7 @@ import { MulterModule } from '@nestjs/platform-express';
         EMAIL_PASSWORD: Joi.string().required(),
       }),
     }),
+    EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     CacheModule.register({ isGlobal: true }),
     MulterModule.register({
@@ -46,6 +52,10 @@ import { MulterModule } from '@nestjs/platform-express';
     EmailModule,
     EmailSchedulingModule,
     CloudinaryModule,
+    StripeModule,
+    OpenpayModule,
+    NotificationModule,
+    FileModule,
   ],
   controllers: [],
   providers: [

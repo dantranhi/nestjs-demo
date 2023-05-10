@@ -2,6 +2,7 @@ import {
   Body,
   CacheInterceptor,
   CACHE_MANAGER,
+  ClassSerializerInterceptor,
   Controller,
   Get,
   HttpCode,
@@ -9,9 +10,9 @@ import {
   Post,
   Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { User } from '@prisma/client';
-import { Cache } from 'cache-manager';
 import { Response } from 'express';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { UserService } from 'src/user/user.service';
@@ -23,11 +24,11 @@ import { JwtRefreshGuard } from './guard/jwt-refresh.guard';
 import { LocalAuthenticationGuard } from './guard/local-authentication.guard';
 
 @Controller('auth')
+@UseInterceptors(ClassSerializerInterceptor)
 export class AuthController {
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   @Post('register')

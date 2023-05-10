@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  forwardRef,
   HttpException,
   HttpStatus,
+  Inject,
   Injectable,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -11,12 +13,17 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import Permission from 'src/type/permission.type';
+import StripeService from 'src/stripe/stripe.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
+    @Inject(forwardRef(() => StripeService))
+    private stripeService: StripeService,
+    private notificationService: NotificationService,
   ) {}
 
   async getByEmail(email: string): Promise<User | null> {
@@ -35,12 +42,18 @@ export class UserService {
 
   async createUser(user: CreateUserDto): Promise<User> {
     try {
+      const stripeCustomer = await this.stripeService.createCustomer(
+        user.name,
+        user.email,
+      );
+
       const hash = await bcrypt.hash(user.password, 10);
       return await this.prisma.user.create({
         data: {
           ...user,
           password: hash,
           permissions: [Permission.UPDATE_AVATAR],
+          stripeCustomerId: stripeCustomer.id,
         },
       });
     } catch (error) {
@@ -52,6 +65,29 @@ export class UserService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  async updateUser(id: number) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    await this.notificationService
+      .sendPush(
+        user,
+        'Profiie update',
+        'Your Profile have been updated successfully',
+      )
+      .catch((e) => {
+        console.log('Error sending push notification', e);
+      });
+  }
+
+  async updateMonthlySubscriptionStatus(
+    stripeCustomerId: string,
+    monthlySubscriptionStatus: string,
+  ) {
+    return this.prisma.user.update({
+      where: { stripeCustomerId },
+      data: { monthlySubscriptionStatus },
+    });
   }
 
   async setCurrentRefreshToken(refreshToken: string, userId: number) {
@@ -105,4 +141,30 @@ export class UserService {
       throw new BadRequestException('Invalid file type.');
     }
   }
+
+  // Firebase Notification System
+
+  enablePush = async (user_id: number, update_dto: any): Promise<any> => {
+    const user = await this.prisma.user.findUnique({
+      where: { id: user_id },
+    });
+    return await this.notificationService.acceptPushNotification(
+      user,
+      update_dto,
+    );
+  };
+
+  disablePush = async (user_id: number, update_dto: any): Promise<any> => {
+    const user = await this.prisma.user.findUnique({
+      where: { id: user_id },
+    });
+    return await this.notificationService.disablePushNotification(
+      user,
+      update_dto,
+    );
+  };
+
+  getPushNotifications = async (): Promise<any> => {
+    return await this.notificationService.getNotifications();
+  };
 }

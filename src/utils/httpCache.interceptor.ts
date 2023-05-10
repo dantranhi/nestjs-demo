@@ -13,10 +13,8 @@ export class HttpCacheInterceptor extends CacheInterceptor {
       context.getHandler(),
     );
 
-    console.log('Cache interceptor running....');
     if (cacheKey) {
       const request = context.switchToHttp().getRequest();
-      console.log(request._parsedUrl.query)
       return `${cacheKey}-${request._parsedUrl.query}`;
     }
 

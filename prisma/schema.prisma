@@ -11,17 +11,20 @@ datasource db {
 }
 
 model User {
-  id                 Int          @id @default(autoincrement())
-  email              String       @unique
-  name               String?
-  password           String
+  id                        Int                 @id @default(autoincrement())
+  email                     String              @unique
+  name                      String?
+  password                  String
   // role               String           @default("USER")
-  hashedRefreshToken String?
-  avatarUrl          String?
-  avatarPublicId     String?
-  posts              Post[]
-  courses            UserCourse[]
-  permissions        String[]     @default([])
+  hashedRefreshToken        String?
+  avatarUrl                 String?
+  avatarPublicId            String?
+  stripeCustomerId          String              @unique
+  monthlySubscriptionStatus String?
+  posts                     Post[]
+  courses                   UserCourse[]
+  permissions               String[]            @default([])
+  notificationTokens        NotificationToken[]
 
   @@map("users")
 }
@@ -50,4 +53,27 @@ model UserCourse {
   courseId Int
 
   @@id([userId, courseId])
+}
+
+model NotificationToken {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  device_type String
+
+  notification_token String
+
+  status        String         @default("ACTIVE")
+  notifications Notification[]
+}
+
+model Notification {
+  id                  Int               @id @default(autoincrement())
+  notificationTokenId Int
+  notification_token  NotificationToken @relation(fields: [notificationTokenId], references: [id])
+  title               String
+  body                String?           @db.VarChar(5000)
+  created_by          String
+  status              String            @default("ACTIVE")
 }

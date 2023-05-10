@@ -11,7 +11,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
   'jwt-refresh-token'
 ) {
   constructor(
-    private readonly configService: ConfigService,
+    readonly configService: ConfigService,
     private readonly userService: UserService,
   ) {
     super({
